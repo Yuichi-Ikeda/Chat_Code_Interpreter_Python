@@ -1,0 +1,5 @@
+.env
+venv/
+input_files/*.ttf
+input_files/*.xlsx
+input_files/private/*
