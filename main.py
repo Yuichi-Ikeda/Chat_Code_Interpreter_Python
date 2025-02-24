@@ -2,7 +2,8 @@ import os
 import time
 from openai import AzureOpenAI
 
-FILE_PATH = ".\\input_files\\Data.zip"
+FILE_FONT_PATH = ".\\input_files\\Font.zip"
+FILE_EXCEL_PATH = ".\\input_files\\Excel.zip"
 
 api_endpoint = os.getenv("AZURE_OPENAI_ENDPOINT")
 api_key = os.getenv("AZURE_OPENAI_API_KEY")
@@ -11,34 +12,55 @@ deployment_name = os.getenv("DEPLOYMENT_NAME")
 
 try:
     client = AzureOpenAI(api_key=api_key, api_version=api_version, azure_endpoint=api_endpoint)
-    # ファイルをアップロード
-    file = client.files.create(file=open(FILE_PATH, "rb"), purpose='assistants')
-    print(f"File uploaded successfully. File ID: {file.id}", flush=True)
+
+    # FONT ファイルをアップロード
+    file_font = client.files.create(file=open(FILE_FONT_PATH, "rb"), purpose='assistants')
+    print(f"Font file uploaded successfully. File ID: {file_font.id}")
 
     # アシスタントを作成
     assistant = client.beta.assistants.create(
-        name="AI assistant",
+        name="AI Assistant for Excel File Analysis",
         model=deployment_name,
-        instructions="You are an AI assistant that analyzes uploaded files and answers user questions interactively. Please answer in Japanese.",
+        instructions="You are an AI assistant that analyzes EXCEL files. Please answer user requests in Japanese.",
         tools=[{"type": "code_interpreter"}],
-        tool_resources={"code_interpreter": {"file_ids": [file.id]}},
+        tool_resources={"code_interpreter": {"file_ids": [file_font.id]}},
     )
-    print(f"Assistant created successfully. Assistant ID: {assistant.id}")
+    print(f"Assistant created successfully. Assistant ID: {assistant.id}\n")
+
+    # EXCEL ファイルをアップロード
+    file_excel = client.files.create(file=open(FILE_EXCEL_PATH, "rb"), purpose='assistants')
+    print(f"Excel file uploaded successfully. File ID: {file_excel.id}")
 
     # スレッドを作成
-    thread = client.beta.threads.create()
+    thread = client.beta.threads.create(
+        messages=[
+            {
+                "role": "user",
+                "content": "アップロードされた Font.zip と Excel.zip を /mnt/data/upload_files に展開してください。これらの ZIP ファイルには解析対象の EXCEL ファイルと日本語フォント NotoSansJP.ttf が含まれています。展開した先にある EXCEL ファイルをユーザーの指示に従い解析してください。EXCEL データからグラフやチャート画像を生成する場合、タイトル、軸項目、凡例等に NotoSansJP.ttf を利用してください。",
+                "attachments":[
+                    {
+                    "file_id": file_font.id,
+                    "file_id": file_excel.id,
+                    "tools": [{"type": "code_interpreter"}]
+                    }
+                ]
+            }
+        ]
+    )
+
     print("Chat session started. Type 'exit' to end the session.")
 
     while True:
         # ユーザー入力を取得
         user_input = input("\nUser: ")
         
+        # 終了
         if user_input.lower() == "exit":
             print("Ending session...")
             break
         
         # ユーザーのメッセージを送信
-        message = client.beta.threads.messages.create(
+        client.beta.threads.messages.create(
             thread_id=thread.id,
             role="user",
             content=user_input
@@ -48,15 +70,18 @@ try:
         run = client.beta.threads.runs.create(
             thread_id=thread.id, 
             assistant_id=assistant.id,
-            instructions="Please use the NotoSansJP.ttf font included in the ZIP file when writing titles, labels and legends on chart image.",
         )
 
         print("\nWaiting for response...")
         while True:
             run = client.beta.threads.runs.retrieve(thread_id=thread.id, run_id=run.id)
+            messages = client.beta.threads.messages.list(thread_id=thread.id)
 
             if run.status == "completed":
-                messages = client.beta.threads.messages.list(thread_id=thread.id)
+                print(f"\nRun status: {run.status}")
+                for message in messages:
+                    print(f"{message.content}")
+
                 print("\nAssistant:")
                 for content_block in messages.data[0].content:
                     if content_block.type == "text":
@@ -77,27 +102,33 @@ try:
                         print(f"Unhandled content type: {content_block.type}")
                 break
 
-            elif run.status == "requires_action":
-                print("Requires action, handling function calling.")
-                pass  # 追加の処理が必要な場合ここに書く
+            elif run.status in ["queued", "in_progress"]:
+                print(f"\nRun status: {run.status}")
+                for message in messages:
+                    print(f"{message.content}")
+                time.sleep(5)
 
-            elif run.status in ["expired", "failed", "cancelled"]:
+            else:
                 print(f"Run status: {run.status}")
                 if run.status == "failed":
                     print(f"Error Code: {run.last_error.code}, Message: {run.last_error.message}")
                 break
 
-            else:
-                print(f"Run status: {run.status}")
-                time.sleep(5)
-
     # スレッドを削除
     client.beta.threads.delete(thread.id)
     print("Thread deleted successfully.")
 
+    # EXCEL ファイルを削除
+    client.files.delete(file_excel.id)
+    print("Excel file deleted successfully.")
+
     # アシスタントを削除
     client.beta.assistants.delete(assistant.id)
     print("Assistant deleted successfully.")
+
+    # FONT ファイルを削除
+    client.files.delete(file_font.id)
+    print("Font file deleted successfully.")
 
 except Exception as e:
     print(f"An error occurred: {e}")
