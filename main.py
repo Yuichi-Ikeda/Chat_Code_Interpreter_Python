@@ -11,6 +11,7 @@ api_version = os.getenv("API_VERSION")
 deployment_name = os.getenv("DEPLOYMENT_NAME")
 
 try:
+    # クライアントの初期化
     client = AzureOpenAI(api_key=api_key, api_version=api_version, azure_endpoint=api_endpoint)
 
     # FONT ファイルをアップロード
@@ -47,14 +48,14 @@ try:
             }
         ]
     )
-
     print("Chat session started. Type 'exit' to end the session.")
 
+    # チャットループ
     while True:
         # ユーザー入力を取得
         user_input = input("\nUser: ")
         
-        # 終了
+        # 終了コマンドの処理
         if user_input.lower() == "exit":
             print("Ending session...")
             break

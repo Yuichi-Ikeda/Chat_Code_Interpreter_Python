@@ -108,3 +108,9 @@ thread = client.beta.threads.create(
 ## デバッグ
 
 VSCode からデバッグ実行する場合は、`.vscode/launch.json` ファイルが用意されています。`F5` キーを押してデバッグ実行を行うことができます。
+
+## 参考資料
+
+- [クイック スタート: Azure OpenAI Assistants (プレビュー) の使用を開始する](https://learn.microsoft.com/ja-jp/azure/ai-services/openai/assistants-quickstart?pivots=programming-language-python)
+
+- [Assistants Code Interpreter](https://platform.openai.com/docs/assistants/tools/code-interpreter?lang=python)
