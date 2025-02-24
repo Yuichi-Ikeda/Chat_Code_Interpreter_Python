@@ -4,16 +4,6 @@
 
 EXCELファイルと日本語フォントを ZIP 形式でアップロードし、日本語対応したチャートやグラフを作成するシナリオの検証用途として作成されています。
 
-## 検証環境
-
-2025年2月時点で Assistants API はプレビュー機能であり、[サポートされているリージョン](https://learn.microsoft.com/ja-jp/azure/ai-services/openai/concepts/models?tabs=global-standard%2Cstandard-chat-completions#assistants-preview)が限られています。
-
-本検証は、以下の環境を利用しています。
-
-- リージョン (Glbal Standard) : `westus`
-- GPT-4o モデル バージョン : `2024-05-13`
-- API_VERSION : `2024-05-01-preview`
-
 ## 日本語フォント
 
 日本語フォントを ZIP にアーカイブしアップロードして利用するシナリオには制約があります。現状アーカイブした日本語フォントと EXCEL ファイルのアップロード場所を同じディレクトリに明示的に指定する事で安定した動作を確認しています。
@@ -39,6 +29,13 @@ thread = client.beta.threads.create(
 )
 ```
 
+## 検証環境
+
+2025年2月時点で Assistants API はプレビュー機能であり、[サポートされているモデルとリージョン](https://learn.microsoft.com/ja-jp/azure/ai-services/openai/concepts/models?tabs=global-standard%2Cstandard-chat-completions#assistants-preview)が限られています。本検証では、以下の環境を利用しています。
+
+- リージョン (Glbal Standard) : `westus`
+- GPT-4o モデル バージョン : `2024-05-13`
+- API_VERSION : `2024-05-01-preview`
 
 ## セットアップ
 
