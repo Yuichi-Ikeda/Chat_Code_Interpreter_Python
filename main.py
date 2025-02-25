@@ -48,6 +48,7 @@ try:
             }
         ]
     )
+    print(f"Thread created successfully. Thread ID: {thread.id}")
     print("Chat session started. Type 'exit' to end the session.")
 
     # チャットループ
